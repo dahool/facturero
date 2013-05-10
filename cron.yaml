@@ -1,0 +1,15 @@
+cron:
+- description: enviar notificacion (si hiciera falta)
+  url: /op/notify
+  schedule: every mon,tue,wed,thu,fri 15:00
+  timezone: America/Argentina/Buenos_Aires 
+
+- description: verificamos necesidad de actualizar
+  url: /op/checkupdate
+  schedule: every sat 9:00
+  timezone: America/Argentina/Buenos_Aires 
+
+- description: mantener una instancia arriba
+  url: /keepalive
+  schedule: every 5 minutes
+

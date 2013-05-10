@@ -1,0 +1,3 @@
+{% for p in persons %}
+<li class="ui-state-default" id="order_{{p.key().id()}}|{{p.name}}|{{p.mail}}"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>({{p.order}}) {{p.name}} [{%if p.find_date %}{{p.find_date.date|date("%d/%m/%Y")}}{%endif%}]</li>
+{% endfor %}

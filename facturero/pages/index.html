@@ -1,0 +1,63 @@
+<html>
+<head>
+<title>Facturero</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type="text/css">
+body {
+    /*background: #000 url(images/churros.jpg);*/
+    background: #000;
+}
+#croissant {
+    -moz-background-clip:border;
+    -moz-background-inline-policy:continuous;
+    -moz-background-origin:padding;
+    background:transparent url(images/croissant.jpg) no-repeat scroll 0 0;
+    height:229px;
+    width:300px;
+}
+#churros {
+    display: float;
+    -moz-background-clip:border;
+    -moz-background-inline-policy:continuous;
+    -moz-background-origin:padding;
+    background:transparent url(images/churros.jpg) no-repeat scroll 0 0;
+    height:345px;
+    width:460px;
+}
+#footer {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width:120px;
+    height:30px;
+}
+.table {
+    -moz-background-clip:border;
+    -moz-background-inline-policy:continuous;
+    -moz-background-origin:padding;
+    background:transparent url(images/fondo.png) no-repeat scroll 0 0;
+    height:475px;
+    padding-left:56px;
+    padding-top:45px;
+    width:381px;
+    margin-right: auto;
+    margin-left: auto;
+}
+.table td {
+    border-bottom: solid 1px;
+}
+.today {
+  font-weight: bold;
+  color: #FF0000;
+}
+.pass {
+  text-decoration: line-through;
+}
+</style>
+</head>
+<body>
+<div class="table">
+{{ table }}
+</div>
+</body>
+</html>

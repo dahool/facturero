@@ -1,0 +1,45 @@
+application: facturerohrd
+version: 10
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+default_expiration: '15d'
+
+builtins:
+- remote_api: on
+
+inbound_services:
+- mail
+- warmup
+
+libraries:
+- name: webapp2
+  version: latest
+- name: jinja2
+  version: latest
+  
+admin_console:
+  pages:
+  - name: Administrar
+    url: /op/setup/
+    
+handlers:
+- url: /images/(.*\.(gif|png|jpg|js))
+  static_files: images/\1
+  upload: images/(.*\.(gif|png|jpg|js))
+  
+- url: /_ah/mail/.+
+  script: handle_mail.application 
+  login: admin
+
+- url: /mail_worker
+  script: gae.email.worker.application
+  login: admin
+
+- url: /op/.+
+  script: index.application
+  login: admin
+
+- url: /.*
+  script: index.application

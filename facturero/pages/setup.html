@@ -1,0 +1,272 @@
+<html>
+<head>
+<title>Facturero - Back Office</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.19/themes/base/jquery-ui.css" type="text/css" />
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.19/themes/ui-lightness/jquery-ui.css" type="text/css" />
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>	
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.19/jquery-ui.min.js"></script>	
+<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>	
+<style type="text/css">
+    body { font-size: 62.5%; }
+    label, input { display:block; }
+    input.text { margin-bottom:12px; width:95%; padding: .4em; }
+    fieldset { padding:0; border:0; margin-top:25px; }
+    h1 { font-size: 1.2em; margin: .6em 0; }    
+	#sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+	#sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+	#sortable li span { position: absolute; margin-left: -1.3em; }
+    #setupform ul { list-style-type: none; margin: 0; padding: 0; }
+    #wrapper { height: 100%; }
+    #toolbar { padding: 10px 4px; }    
+    #accordion { margin-top: 10px; }
+    .center { text-align: center: }
+    .no-close .ui-dialog-titlebar-close {display: none }
+    #progressbar img { margin-left: 25%; margin-top: 50px;}
+    .ui-datepicker-trigger { margin-left: 5px; }
+    #trashcan { 
+        float: right;
+        width: 128px;
+        height: 128px;
+    }
+    .trashcan { 
+        background: transparent url('/images/trashcan.png') no-repeat 0 0;
+    }
+    .trashcan-full { 
+        background-image: url('/images/trashcan_full.png');
+    }
+</style>
+<script type="text/javascript">
+    function show_confirm(message) {
+        $( "#dialog-message" ).dialog({
+            modal: true,
+            resizable: false,
+            title: 'Confirmaci&oacute;n',
+            open: function(event, ui) {
+                $(this).html('<p><span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>'+message+'</p>');
+            },
+            buttons: {
+                Ok: function() {
+                    $( this ).dialog( "close" );
+                }
+            }
+        });        
+    };
+    function show_error(message) {
+        $( "#dialog-message" ).dialog({
+            modal: true,
+            resizable: false,
+            title: 'Error',
+            open: function(event, ui) {
+                $(this).html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>'+message+'</p>');
+            },
+            buttons: {
+                Ok: function() {
+                    $( this ).dialog( "close" );
+                }
+            }
+        });        
+    };    
+    function update_p() {
+        $( "#progressbar" ).dialog( "open" );
+        $('#sortable').load('/op/setup/get_persons/', function() {
+            $( "#progressbar" ).dialog( "close" );
+        });        
+    }
+    function call(url, data, callback) {
+        $( "#progressbar" ).dialog( "open" );
+        $.post(url, data).complete(function(data, status, xr) {
+            $( "#progressbar" ).dialog( "close" );
+            if (status == 'success') {
+                if (callback != undefined) {
+                    callback($.parseJSON(data.responseText));
+                }
+            } else {
+                show_error("Error: " + status);
+            }
+        });
+    };
+	$(function() {
+        $("#accordion").accordion();
+        $("#sortable").sortable({placeholder: "ui-state-highlight"});
+		$("#sortable").disableSelection();
+        $("#trashcan").droppable({
+            accepts: "#sortable > li",
+            hoverClass: "trashcan-full",
+            tolerance: "touch",
+            drop: function( event, ui ) {
+                $(ui.draggable).attr('id',$(ui.draggable).attr('id')+"|@").hide();
+            }
+        });
+        $("#progressbar").dialog({
+            autoOpen: false,
+            modal: true,
+            resizable: false,
+            closeOnEscape: false,
+            dialogClass: 'no-close',
+        });
+        $("#dialog-add-form").dialog({
+            autoOpen: false,
+			height: 260,
+			width: 320,
+			modal: true,
+            resizable: false,
+            buttons: {
+				"Agregar": function() {
+                    var name = $("#name_id").val();
+                    var mail = $("#mail_id").val();
+                    if ($("#addform").valid()) {
+                        str = '<li class="ui-state-default" id="order_#'+name+'|'+mail+'"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>'+name+'</li>';
+                        $("#sortable").append(str);
+                        $( this ).dialog( "close" );
+                        $("#accordion").accordion( "resize" );
+                    }
+				},
+				"Cerrar": function() {
+					$( this ).dialog( "close" );
+				}
+			},
+        })
+        $("#addform").validate({errorClass: 'ui-state-error'});
+        $("#setupform").validate({errorClass: 'ui-state-error'});
+        $("#btn_add").button().click(function() {
+            $("#name_id").val("");
+            $("#mail_id").val("");
+            $( "#dialog-add-form" ).dialog( "open" );
+        });
+        $("#btn_save").button().click(function() {
+            if (!$("#setupform").valid()) {
+                show_error('Por favor corrija los campos solicitados antes de guardar.');
+                return;
+            }
+            data = $("#sortable").sortable("serialize", {'key': 'order'});
+            d = $("#setupform").serialize();
+            data = data + "&" + d;
+            call('/op/save/', data, function(data) {
+                if (data.success) {
+                    update_p();
+                    show_confirm("Lista actualizada.");
+                }
+            });
+        });
+        
+        $( "#initindex" ).button().click(function() {
+            $( "#dialog-message" ).dialog({
+                modal: true,
+                resizable: false,
+                open: function(event, ui) {
+                    $(this).html('<label>Fecha desde.</label><br/><input readonly="readonly" class="ui-widget-content ui-corner-all" style="float: left;" id="date_value" type="text" value=""/>');
+                    $("#date_value").datepicker({
+                        dateFormat: 'dd/mm/yy',
+                        showOn: "button",
+                        buttonImage: "/images/calendar.png",
+                        buttonImageOnly: true});
+                },
+               buttons: {
+                    "Iniciar": function() {
+                        $("#date_value").datepicker( "destroy" )
+                        var data = $("#date_value").val();
+                        $( this ).dialog( "close" );
+                        call('/op/index/', {'data': data}, function(data) {
+                            if (data.success) {
+                                update_p();
+                                show_confirm(data.message);
+                            } else {
+                                show_error(data.message);
+                            }
+                        });
+                    },
+                    "Cerrar": function() {
+                        $( this ).dialog( "close" );
+                    }
+                },                    
+            });            
+        });
+        $( "#reindex" ).button().click(function(){
+            call('/op/index/', {'redo': true}, function(data) {
+                if (data.success) {
+                    update_p();
+                    show_confirm(data.message);
+                } else {
+                    show_error(data.message);
+                }
+            });            
+        });
+        $( "#notify" ).button().click(function() {
+            $( "#dialog-message" ).dialog({
+                modal: true,
+                resizable: false,
+                open: function(event, ui) {
+                    $(this).html('<label>Para enviar a un responsable en particular ingrese el n* de orden. Deje en 0 para usar la lista.</label><br/><input class="text ui-widget-content ui-corner-all" id="data_value" type="text" value="0"/><br/><label>Motivo:</label><input class="text ui-widget-content ui-corner-all" id="data_reason" type="text" value=""/>');
+                },
+               buttons: {
+                    "Enviar": function() {
+                        var data = $("#data_value").val();
+                        var reason = $("#data_reason").val();
+                        $( this ).dialog( "close" );
+                        call('/op/notify/', {'order': data, 'reason': reason}, function(data) {
+                            if (data.success) {
+                                show_confirm(data.message);
+                            } else {
+                                show_error(data.message);
+                            }
+                        });                         
+                    },
+                    "Cerrar": function() {
+                        $( this ).dialog( "close" );
+                    }
+                },                    
+            });            
+        });
+	});
+</script>
+</head>
+<body>
+<div id="progressbar" class="center" style="display: none;"><img src="/images/loader.gif"/></div>
+<div id="dialog-add-form" title="Participante" style="display: none;">
+    <form id="addform">
+        <fieldset>
+            <label for="name_id">Nombre</label>
+            <input id="name_id" type="text" name="name" value="" class="required text ui-widget-content ui-corner-all"/>
+            <label for="mail_id">Correo</label>
+            <input class="required email text ui-widget-content ui-corner-all" id="mail_id" type="text" name="mail" value=""/>
+        </fieldset>
+    </form>
+</div>
+<div id="dialog-message" title="" style="display: none;"></div>
+<div id="wrapper">
+<span id="toolbar" class="ui-widget-header ui-corner-all">
+	<button id="initindex">Generar fechas</button>
+	<button id="reindex">Re generar fechas</button>
+	<button id="notify">Enviar notificaci&oacute;n</button>
+</span>
+<div id="accordion">
+    <h3><a href="#">Participantes</a></h3>
+    <div>
+        <p><button id="btn_add">Nuevo</button></p>
+        <div id="trashcan" class="trashcan"><span>&nbsp;</span></div>
+        <ul id="sortable">
+            {% for p in persons %}
+            <li class="ui-state-default" id="order_{{p.key().id()}}|{{p.name}}|{{p.mail}}"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>({{p.order}}) {{p.name}} [{%if p.find_date %}{{p.find_date.date|date('%d/%m/%Y')}}{%endif%}]</li>
+            {% endfor %}
+        </ul>    
+    </div>
+    <h3><a href="#">Mensaje</a></h3>
+    <div>
+        <form id="setupform">
+            <fieldset>
+                <label for="mail_title_id">Asunto responsable (variable $DAY)</label>
+                <input id="mail_title_id" type="text" name="MAIL_TITLE" value="{{MAIL_TITLE}}" class="required text ui-widget-content ui-corner-all"/>
+                <label for="mail_title_all_id">Asunto resto (variables $DAY y $NAME)</label>
+                <input id="mail_title_all_id" type="text" name="MAIL_TITLE_ALL" value="{{MAIL_TITLE_ALL}}" class="required text ui-widget-content ui-corner-all"/>
+                <label for="mail_body_id">Mensaje</label>
+                <textarea id="mail_body_id" rows="3" cols="70" name="MAIL_BODY" class="required text ui-widget-content ui-corner-all">{{MAIL_BODY}}</textarea>
+            </fieldset>
+        </form>
+    </div>
+</div>
+<br/>
+<button id="btn_save">Guardar cambios</button>
+</div>
+</body>
+</html>
